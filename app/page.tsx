@@ -1,33 +1,7 @@
 import Link from "next/link";
+import { movies } from "./data/movies"; // Mengambil data dari file bersama
 
 export default function Home() {
-  const movies = [
-    {
-      id: 1,
-      title: "Puri Jagatsukma",
-      genre: "Horror / Supranatural",
-      poster: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=500&q=80",
-    },
-    {
-      id: 2,
-      title: "Santet Rogo Mayit",
-      genre: "Horror / Folkor",
-      poster: "https://images.unsplash.com/photo-1626544827763-d516dce335e2?w=500&q=80",
-    },
-    {
-      id: 3,
-      title: "Jurang Penari",
-      genre: "Mystery / Thriller",
-      poster: "https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?w=500&q=80",
-    },
-    {
-      id: 4,
-      title: "Big Buck Bunny",
-      genre: "Animation / Comedy",
-      poster: "https://peach.blender.org/wp-content/uploads/title_anouncement.jpg?x11217",
-    },
-  ];
-
   return (
     <main className="min-h-screen bg-neutral-900 text-white p-8">
       <div className="max-w-6xl mx-auto">
