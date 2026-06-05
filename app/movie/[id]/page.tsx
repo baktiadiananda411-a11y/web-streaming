@@ -1,26 +1,35 @@
+"use client";
+
 import Link from "next/link";
-import { movies } from "../../data/movies"; // Pastikan path import ini tidak error merah ya
+import { useEffect, useState, use } from "react";
+import { supabase } from "../../utils/supabase";
+import dynamic from "next/dynamic";
 
-// 1. Tambahkan kata 'async' dan ubah tipe params menjadi Promise
-export default async function MovieDetail({ params }: { params: Promise<{ id: string }> }) {
-  
-  // 2. Kita 'tunggu' (await) sampai parameter ID-nya siap dibaca dari URL
-  const { id } = await params;
+// Memuat ReactPlayer hanya di sisi client agar tidak error SSR
+const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
-  // 3. Cari film, pastikan keduanya diubah jadi string agar pencariannya akurat
-  const movie = movies.find((m) => String(m.id) === String(id));
+export default function MovieDetail({ params }: { params: Promise<{ id: string }> }) {
+  // Menggunakan 'use' untuk menangani Promise dari params di Next.js 15+
+  const resolvedParams = use(params);
+  const [movie, setMovie] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Jika film tidak ditemukan
-  if (!movie) {
-    return (
-      <main className="min-h-screen bg-neutral-900 flex flex-col items-center justify-center p-8">
-        <h1 className="text-3xl font-bold text-red-600 mb-4">Film Tidak Ditemukan</h1>
-        <Link href="/" className="text-blue-400 hover:text-blue-300 transition-colors">
-          &larr; Kembali ke Beranda
-        </Link>
-      </main>
-    );
-  }
+  useEffect(() => {
+    async function fetchMovie() {
+      const { data, error } = await supabase
+        .from("movies")
+        .select("*")
+        .eq("id", resolvedParams.id)
+        .single();
+
+      if (data) setMovie(data);
+      setLoading(false);
+    }
+    fetchMovie();
+  }, [resolvedParams.id]);
+
+  if (loading) return <div className="p-8 text-white min-h-screen bg-neutral-900">Memuat film...</div>;
+  if (!movie) return <div className="p-8 text-white min-h-screen bg-neutral-900">Film tidak ditemukan!</div>;
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white p-8">
@@ -29,20 +38,17 @@ export default async function MovieDetail({ params }: { params: Promise<{ id: st
           &larr; Kembali ke Beranda
         </Link>
         
-        {/* Video Player */}
         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl mb-6">
-          <video 
-            controls 
-            className="w-full h-full"
-            autoPlay
-            key={movie.id}
-          >
-            <source src={movie.videoUrl} type="video/mp4" />
-            Browser kamu tidak mendukung tag video.
-          </video>
+          <ReactPlayer 
+            url={movie.videoUrl}
+            width="100%" 
+            height="100%" 
+            controls
+            playing
+            light={movie.poster}
+          />
         </div>
 
-        {/* Informasi Detail Film */}
         <h1 className="text-3xl font-bold mb-2">{movie.title}</h1>
         <p className="text-red-500 font-medium mb-4">{movie.genre}</p>
         <p className="text-gray-300 leading-relaxed max-w-2xl">{movie.description}</p>
