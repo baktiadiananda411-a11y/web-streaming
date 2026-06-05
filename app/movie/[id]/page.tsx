@@ -2,33 +2,33 @@
 
 import Link from "next/link";
 import { useEffect, useState, use } from "react";
-import { supabase } from "../../utils/supabase";
-import dynamic from "next/dynamic";
-
-// Memuat ReactPlayer secara dinamis agar tidak error saat build Vercel
-const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
+import { supabase } from "../../utils/supabase"; 
 
 export default function MovieDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { id } = resolvedParams;
   const [movie, setMovie] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchMovie() {
-      // Mengambil data dari Supabase
       const { data, error } = await supabase
         .from("movies")
         .select("*")
-        .eq("id", resolvedParams.id)
+        .eq("id", id)
         .single();
 
-      if (data) setMovie(data);
+      if (data) {
+        setMovie(data);
+      } else {
+        console.log("Error:", error);
+      }
       setLoading(false);
     }
     fetchMovie();
-  }, [resolvedParams.id]);
+  }, [id]);
 
-  if (loading) return <div className="p-8 text-white min-h-screen bg-neutral-900">Memuat film...</div>;
+  if (loading) return <div className="p-8 text-white min-h-screen bg-neutral-900">Memuat...</div>;
   if (!movie) return <div className="p-8 text-white min-h-screen bg-neutral-900">Film tidak ditemukan!</div>;
 
   return (
@@ -38,14 +38,27 @@ export default function MovieDetail({ params }: { params: Promise<{ id: string }
           &larr; Kembali ke Beranda
         </Link>
         
+        {/* Logika Video */}
         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl mb-6">
-          <ReactPlayer 
-            url={movie.videoUrl} 
-            width="100%" 
-            height="100%" 
-            controls={true}
-            playing={true}
-          />
+          {!movie.videourl ? (
+             <div className="w-full h-full flex items-center justify-center text-gray-400">
+               URL Video tidak valid/kosong
+             </div>
+          ) : (
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${
+                movie.videourl.includes('v=') 
+                  ? movie.videourl.split('v=')[1].split('&')[0] 
+                  : movie.videourl.split('/').pop()
+              }`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          )}
         </div>
 
         <h1 className="text-3xl font-bold mb-2">{movie.title}</h1>
