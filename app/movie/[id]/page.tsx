@@ -1,16 +1,23 @@
 import Link from "next/link";
-import { movies } from "../../data/movies";
+import { movies } from "../../data/movies"; // Pastikan path import ini tidak error merah ya
 
-export default function MovieDetail({ params }: { params: { id: string } }) {
-  // Mencari film yang ID-nya pas dengan ID di URL
-  const movie = movies.find((m) => m.id === params.id);
+// 1. Tambahkan kata 'async' dan ubah tipe params menjadi Promise
+export default async function MovieDetail({ params }: { params: Promise<{ id: string }> }) {
+  
+  // 2. Kita 'tunggu' (await) sampai parameter ID-nya siap dibaca dari URL
+  const { id } = await params;
+
+  // 3. Cari film, pastikan keduanya diubah jadi string agar pencariannya akurat
+  const movie = movies.find((m) => String(m.id) === String(id));
 
   // Jika film tidak ditemukan
   if (!movie) {
     return (
-      <main className="min-h-screen bg-neutral-900 text-white p-8 text-center">
-        <h1 className="text-2xl font-bold text-red-600 mb-4">Film Tidak Ditemukan</h1>
-        <Link href="/" className="text-blue-400 hover:underline">Kembali ke Beranda</Link>
+      <main className="min-h-screen bg-neutral-900 flex flex-col items-center justify-center p-8">
+        <h1 className="text-3xl font-bold text-red-600 mb-4">Film Tidak Ditemukan</h1>
+        <Link href="/" className="text-blue-400 hover:text-blue-300 transition-colors">
+          &larr; Kembali ke Beranda
+        </Link>
       </main>
     );
   }
@@ -22,13 +29,13 @@ export default function MovieDetail({ params }: { params: { id: string } }) {
           &larr; Kembali ke Beranda
         </Link>
         
-        {/* Video Player yang memutar video spesifik milik film tersebut */}
+        {/* Video Player */}
         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl mb-6">
           <video 
             controls 
             className="w-full h-full"
             autoPlay
-            key={movie.id} // Memaksa player reload saat ganti film
+            key={movie.id}
           >
             <source src={movie.videoUrl} type="video/mp4" />
             Browser kamu tidak mendukung tag video.
