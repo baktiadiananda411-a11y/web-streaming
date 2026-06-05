@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { supabase } from "../../utils/supabase"; 
+import dynamic from "next/dynamic";
+
+const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
 export default function MovieDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -12,16 +15,17 @@ export default function MovieDetail({ params }: { params: Promise<{ id: string }
 
   useEffect(() => {
     async function fetchMovie() {
+      // PERBAIKAN 1: Hapus .single() agar tidak crash jika ID tidak ketemu
       const { data, error } = await supabase
         .from("movies")
         .select("*")
-        .eq("id", id)
-        .single();
+        .eq("id", id); 
 
-      if (data) {
-        setMovie(data);
+      // Ambil data pertama jika ada
+      if (data && data.length > 0) {
+        setMovie(data[0]);
       } else {
-        console.log("Error:", error);
+        console.log("Error atau Data kosong:", error);
       }
       setLoading(false);
     }
@@ -38,27 +42,18 @@ export default function MovieDetail({ params }: { params: Promise<{ id: string }
           &larr; Kembali ke Beranda
         </Link>
         
-        {/* Logika Video */}
+        {/* PERBAIKAN 2: Kembali menggunakan ReactPlayer yang jauh lebih stabil */}
         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl mb-6">
-          {!movie.videourl ? (
-             <div className="w-full h-full flex items-center justify-center text-gray-400">
-               URL Video tidak valid/kosong
-             </div>
-          ) : (
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${
-                movie.videourl.includes('v=') 
-                  ? movie.videourl.split('v=')[1].split('&')[0] 
-                  : movie.videourl.split('/').pop()
-              }`}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          )}
+          <ReactPlayer
+            {...({
+              url: movie.videourl, // Menggunakan kolom 'videourl' yang sudah benar
+              width: "100%",
+              height: "100%",
+              controls: true,
+              playing: true,
+              muted: true,
+            } as any)}
+          />
         </div>
 
         <h1 className="text-3xl font-bold mb-2">{movie.title}</h1>
