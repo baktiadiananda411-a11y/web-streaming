@@ -5,17 +5,17 @@ import { useEffect, useState, use } from "react";
 import { supabase } from "../../utils/supabase";
 import dynamic from "next/dynamic";
 
-// Memuat ReactPlayer hanya di sisi client agar tidak error SSR
+// Memuat ReactPlayer secara dinamis agar tidak error saat build Vercel
 const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
 export default function MovieDetail({ params }: { params: Promise<{ id: string }> }) {
-  // Menggunakan 'use' untuk menangani Promise dari params di Next.js 15+
   const resolvedParams = use(params);
   const [movie, setMovie] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchMovie() {
+      // Mengambil data dari Supabase
       const { data, error } = await supabase
         .from("movies")
         .select("*")
@@ -40,12 +40,11 @@ export default function MovieDetail({ params }: { params: Promise<{ id: string }
         
         <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-2xl mb-6">
           <ReactPlayer 
-            url={movie.videoUrl}
+            url={movie.videoUrl} 
             width="100%" 
             height="100%" 
-            controls
-            playing
-            light={movie.poster}
+            controls={true}
+            playing={true}
           />
         </div>
 
